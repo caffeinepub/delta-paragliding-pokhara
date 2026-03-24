@@ -6,6 +6,8 @@ import {
   Maximize2,
   Phone,
   Star,
+  Volume2,
+  VolumeX,
   X,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -178,6 +180,18 @@ function Preloader({ done }: { done: boolean }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
+          <motion.img
+            src="/assets/uploads/delta8-019d1f60-fa1b-715f-b933-694241b5f551-1.jpeg"
+            alt="Delta Paragliding Logo"
+            className="w-52 md:w-80 object-contain mb-6"
+            style={{
+              mixBlendMode: "screen",
+              filter: "drop-shadow(0 0 24px rgba(39,215,255,0.7))",
+            }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+          />
           <motion.p
             className="font-cinematic text-white text-3xl md:text-5xl tracking-[0.3em] text-center px-8"
             initial={{ opacity: 0 }}
@@ -203,6 +217,8 @@ function Preloader({ done }: { done: boolean }) {
 }
 
 // ── Intro Animation ────────────────────────────────────────────────────────────
+const INTRO_IMAGES = [IMG.hero, IMG.takeoff, IMG.pov, IMG.aerial, IMG.joy];
+
 function IntroAnimation({ show }: { show: boolean }) {
   const lines = [
     { text: "FEEL THE EDGE", style: {} },
@@ -216,27 +232,56 @@ function IntroAnimation({ show }: { show: boolean }) {
       style: { color: "#FF7A1A", textShadow: "0 0 30px rgba(255,122,26,0.8)" },
     },
   ];
+
+  const [imgIdx, setImgIdx] = useState(0);
+
+  useEffect(() => {
+    if (!show) return;
+    const interval = setInterval(() => {
+      setImgIdx((prev) => (prev + 1) % INTRO_IMAGES.length);
+    }, 600);
+    return () => clearInterval(interval);
+  }, [show]);
+
   return (
     <AnimatePresence>
       {show && (
         <motion.div
           key="intro"
-          className="fixed inset-0 z-[9998] bg-black flex flex-col items-center justify-center gap-2 md:gap-4 px-6"
+          className="fixed inset-0 z-[9998] flex flex-col items-center justify-center gap-2 md:gap-4 px-6 overflow-hidden"
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8 }}
         >
-          {lines.map((l, i) => (
-            <motion.h2
-              key={l.text}
-              className="font-cinematic text-4xl md:text-7xl lg:text-8xl tracking-widest text-center text-white"
-              style={l.style}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.45 + 0.1, duration: 0.55 }}
-            >
-              {l.text}
-            </motion.h2>
-          ))}
+          {/* Slideshow background */}
+          <AnimatePresence mode="sync">
+            <motion.img
+              key={imgIdx}
+              src={INTRO_IMAGES[imgIdx]}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            />
+          </AnimatePresence>
+          {/* Dark overlay */}
+          <div className="absolute inset-0 bg-black/60" />
+          {/* Text */}
+          <div className="relative z-10 flex flex-col items-center gap-2 md:gap-4">
+            {lines.map((l, i) => (
+              <motion.h2
+                key={l.text}
+                className="font-cinematic text-4xl md:text-7xl lg:text-8xl tracking-widest text-center text-white"
+                style={l.style}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.45 + 0.1, duration: 0.55 }}
+              >
+                {l.text}
+              </motion.h2>
+            ))}
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
@@ -1574,11 +1619,55 @@ export default function App() {
   const [preloaderDone, setPreloaderDone] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const t1 = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t2 = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t3 = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useScrollReveal();
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.loop = true;
+    audio.volume = 0.45;
+
+    const tryPlay = () => {
+      audio.play().catch(() => {});
+    };
+
+    // Try immediately
+    tryPlay();
+
+    // Also listen for any user interaction to start audio
+    const startOnInteraction = () => {
+      tryPlay();
+      document.removeEventListener("click", startOnInteraction);
+      document.removeEventListener("touchstart", startOnInteraction);
+      document.removeEventListener("keydown", startOnInteraction);
+      document.removeEventListener("scroll", startOnInteraction);
+    };
+    document.addEventListener("click", startOnInteraction);
+    document.addEventListener("touchstart", startOnInteraction);
+    document.addEventListener("keydown", startOnInteraction);
+    document.addEventListener("scroll", startOnInteraction);
+
+    return () => {
+      document.removeEventListener("click", startOnInteraction);
+      document.removeEventListener("touchstart", startOnInteraction);
+      document.removeEventListener("keydown", startOnInteraction);
+      document.removeEventListener("scroll", startOnInteraction);
+    };
+  }, []);
+
+  const toggleMute = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const next = !isMuted;
+    audio.muted = next;
+    setIsMuted(next);
+  };
 
   useEffect(() => {
     t1.current = setTimeout(() => {
@@ -1598,6 +1687,34 @@ export default function App() {
 
   return (
     <div style={{ background: "#050B14" }}>
+      {/* biome-ignore lint/a11y/useMediaCaption: background music has no dialogue */}
+      <audio
+        ref={audioRef}
+        src="https://www.dropbox.com/scl/fi/44oi87dfcdlzpivzqlyex/Inspiring-Background-Music-Cinematic-Epic-Music-ROYALTY-FREE-Music-by-MUSIC4VIDEO.mp3?rlkey=9pjavxytxr8zs17tk0w59gkxa&st=eteu9lz0&dl=1"
+        loop
+        preload="auto"
+        autoPlay
+      />
+      {/* Mute / Unmute button */}
+      <motion.button
+        data-ocid="audio.toggle"
+        onClick={toggleMute}
+        className="fixed bottom-6 left-6 z-[200] flex items-center gap-2 px-4 py-2.5 rounded-full text-white/90 hover:text-white transition-colors duration-200"
+        style={{
+          background: "rgba(5,11,20,0.75)",
+          backdropFilter: "blur(12px)",
+          border: "1px solid rgba(39,215,255,0.3)",
+          boxShadow: "0 0 18px rgba(39,215,255,0.15)",
+        }}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        aria-label={isMuted ? "Unmute music" : "Mute music"}
+      >
+        {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+        <span className="font-cinematic text-xs tracking-widest hidden sm:inline">
+          {isMuted ? "UNMUTE" : "MUSIC"}
+        </span>
+      </motion.button>
       <Preloader done={preloaderDone} />
       <IntroAnimation show={showIntro} />
       <motion.div
