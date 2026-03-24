@@ -1619,7 +1619,9 @@ export default function App() {
   const [preloaderDone, setPreloaderDone] = useState(false);
   const [showIntro, setShowIntro] = useState(false);
   const [appReady, setAppReady] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  // Start muted so autoplay always works, unmute on first interaction
+  const [isMuted, setIsMuted] = useState(true);
+  const hasUnmutedRef = useRef(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const t1 = useRef<ReturnType<typeof setTimeout> | null>(null);
   const t2 = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1631,39 +1633,40 @@ export default function App() {
     const audio = audioRef.current;
     if (!audio) return;
     audio.loop = true;
-    audio.volume = 0.45;
+    audio.volume = 0.6;
+    audio.muted = true; // muted autoplay always succeeds in browsers
 
-    const tryPlay = () => {
-      audio.play().catch(() => {});
+    // Start playing immediately (muted)
+    audio.play().catch(() => {});
+
+    // Unmute on first user interaction
+    const unmuteOnInteraction = () => {
+      if (hasUnmutedRef.current) return;
+      hasUnmutedRef.current = true;
+      audio.muted = false;
+      setIsMuted(false);
+      document.removeEventListener("click", unmuteOnInteraction);
+      document.removeEventListener("touchstart", unmuteOnInteraction);
+      document.removeEventListener("keydown", unmuteOnInteraction);
+      document.removeEventListener("scroll", unmuteOnInteraction);
     };
-
-    // Try immediately
-    tryPlay();
-
-    // Also listen for any user interaction to start audio
-    const startOnInteraction = () => {
-      tryPlay();
-      document.removeEventListener("click", startOnInteraction);
-      document.removeEventListener("touchstart", startOnInteraction);
-      document.removeEventListener("keydown", startOnInteraction);
-      document.removeEventListener("scroll", startOnInteraction);
-    };
-    document.addEventListener("click", startOnInteraction);
-    document.addEventListener("touchstart", startOnInteraction);
-    document.addEventListener("keydown", startOnInteraction);
-    document.addEventListener("scroll", startOnInteraction);
+    document.addEventListener("click", unmuteOnInteraction);
+    document.addEventListener("touchstart", unmuteOnInteraction);
+    document.addEventListener("keydown", unmuteOnInteraction);
+    document.addEventListener("scroll", unmuteOnInteraction);
 
     return () => {
-      document.removeEventListener("click", startOnInteraction);
-      document.removeEventListener("touchstart", startOnInteraction);
-      document.removeEventListener("keydown", startOnInteraction);
-      document.removeEventListener("scroll", startOnInteraction);
+      document.removeEventListener("click", unmuteOnInteraction);
+      document.removeEventListener("touchstart", unmuteOnInteraction);
+      document.removeEventListener("keydown", unmuteOnInteraction);
+      document.removeEventListener("scroll", unmuteOnInteraction);
     };
   }, []);
 
   const toggleMute = () => {
     const audio = audioRef.current;
     if (!audio) return;
+    hasUnmutedRef.current = true; // user manually toggled
     const next = !isMuted;
     audio.muted = next;
     setIsMuted(next);
@@ -1693,7 +1696,6 @@ export default function App() {
         src="https://www.dropbox.com/scl/fi/44oi87dfcdlzpivzqlyex/Inspiring-Background-Music-Cinematic-Epic-Music-ROYALTY-FREE-Music-by-MUSIC4VIDEO.mp3?rlkey=9pjavxytxr8zs17tk0w59gkxa&st=eteu9lz0&dl=1"
         loop
         preload="auto"
-        autoPlay
       />
       {/* Mute / Unmute button */}
       <motion.button
