@@ -74,6 +74,14 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(39, 215, 255, 0.15);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow
+      0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.35s ease;
+    will-change: transform;
+  }
+  .glass-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 0 30px rgba(39, 215, 255, 0.3), 0 20px 60px rgba(0, 0, 0, 0.5);
+    border-color: rgba(39, 215, 255, 0.5);
   }
   .glass-card-featured {
     background: rgba(11, 34, 56, 0.85);
@@ -82,11 +90,22 @@
     border: 1px solid rgba(255, 122, 26, 0.4);
     box-shadow: 0 0 30px rgba(255, 122, 26, 0.2), 0 0 60px
       rgba(255, 122, 26, 0.1);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow
+      0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.35s ease;
+    will-change: transform;
+  }
+  .glass-card-featured:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 0 40px rgba(255, 122, 26, 0.45), 0 20px 60px
+      rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 122, 26, 0.7);
   }
   .fade-in-up {
     opacity: 0;
     transform: translateY(40px);
-    transition: opacity 0.8s ease, transform 0.8s ease;
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform
+      0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform, opacity;
   }
   .fade-in-up.visible {
     opacity: 1;
@@ -94,15 +113,63 @@
   }
   .fade-in {
     opacity: 0;
-    transition: opacity 0.8s ease;
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity;
   }
   .fade-in.visible {
     opacity: 1;
+  }
+  /* Slide in from left */
+  .reveal-left {
+    opacity: 0;
+    transform: translateX(-60px);
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform
+      0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform, opacity;
+  }
+  .reveal-left.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  /* Slide in from right */
+  .reveal-right {
+    opacity: 0;
+    transform: translateX(60px);
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform
+      0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform, opacity;
+  }
+  .reveal-right.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  /* Scale pop reveal */
+  .reveal-scale {
+    opacity: 0;
+    transform: scale(0.88);
+    transition: opacity 0.7s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.7s
+      cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform, opacity;
+  }
+  .reveal-scale.visible {
+    opacity: 1;
+    transform: scale(1);
   }
   .neon-divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, #27d7ff, transparent);
     opacity: 0.4;
+  }
+  /* Neon sweep section separator */
+  .neon-sweep-line {
+    height: 1px;
+    width: 0;
+    background: linear-gradient(90deg, transparent, #27d7ff 50%, transparent);
+    opacity: 0;
+    will-change: width, opacity;
+  }
+  .neon-sweep-line.visible {
+    animation: neon-sweep 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   }
   .nav-blur {
     background: rgba(5, 11, 20, 0.92);
@@ -110,13 +177,15 @@
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(39, 215, 255, 0.1);
   }
+  /* Gallery */
   .gallery-item {
     overflow: hidden;
     position: relative;
     cursor: pointer;
   }
   .gallery-item img {
-    transition: transform 0.5s ease;
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
   }
   .gallery-item:hover img {
     transform: scale(1.08);
@@ -124,15 +193,85 @@
   .gallery-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(39, 215, 255, 0.15);
+    background: rgba(39, 215, 255, 0.12);
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+  }
+  .gallery-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      transparent 30%,
+      rgba(39, 215, 255, 0.25) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0s;
   }
   .gallery-item:hover .gallery-overlay {
     opacity: 1;
+  }
+  .gallery-item:hover .gallery-overlay::after {
+    animation: shimmer 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  /* Ken Burns hero background */
+  .ken-burns {
+    animation: ken-burns 8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    will-change: transform;
+  }
+  /* Button neon glow on hover */
+  .btn-neon-hover {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow
+      0.3s ease;
+    will-change: transform;
+  }
+  .btn-neon-hover:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(39, 215, 255, 0.5), 0 0 40px
+      rgba(39, 215, 255, 0.25);
+  }
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
+
+@keyframes ken-burns {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes neon-sweep {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  80% {
+    opacity: 0.5;
+  }
+  100% {
+    width: 100%;
+    opacity: 0.35;
   }
 }
 
@@ -193,4 +332,60 @@
 }
 .bounce-down {
   animation: bounce-down 1.5s ease-in-out infinite;
+}
+
+@keyframes whatsapp-enter {
+  0% {
+    transform: translateY(80px) scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-8px) scale(1.1);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(4px) scale(0.95);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+.whatsapp-enter {
+  animation: whatsapp-enter 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .fade-in-up,
+  .fade-in,
+  .reveal-left,
+  .reveal-right,
+  .reveal-scale {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .ken-burns {
+    animation: none !important;
+  }
+  .reviews-track {
+    animation: none !important;
+  }
+  .pulse-glow-green,
+  .pulse-orange,
+  .bounce-down,
+  .whatsapp-enter {
+    animation: none !important;
+    opacity: 1 !important;
+  }
 }
