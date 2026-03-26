@@ -1,7 +1,7 @@
 import AltitudeTracker from "@/components/AltitudeTracker";
 import BookingCounter from "@/components/BookingCounter";
 import EnhancedReviews from "@/components/EnhancedReviews";
-import ScrollParaglider from "@/components/ScrollParaglider";
+import SkyDivingFlightPath from "@/components/SkyDivingFlightPath";
 import WeatherWidget from "@/components/WeatherWidget";
 import WhatToExpect from "@/components/WhatToExpect";
 import { ContactSection } from "@/components/sections/ContactSection";
@@ -52,7 +52,6 @@ export default function App() {
 
   return (
     <div style={{ background: "#050B14" }}>
-      <ScrollParaglider />
       <Preloader done={preloaderDone} />
       <IntroAnimation show={showIntro} />
       <motion.div
@@ -76,6 +75,7 @@ export default function App() {
           <BookingCounter />
           <WeatherWidget />
           <AltitudeTracker />
+          <SkyDivingFlightPath />
           <WhatToExpect />
           <EnhancedReviews />
           <GallerySection />

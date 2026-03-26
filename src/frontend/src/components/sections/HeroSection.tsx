@@ -31,7 +31,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
         >
-          POKHARA, NEPAL · SARANGKOT LAUNCH SITE
+          POKHARA & EVEREST, NEPAL · SKYDIVING & PARAGLIDING
         </motion.p>
 
         <motion.h1
@@ -41,7 +41,7 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.9 }}
         >
-          FLY IN THE LAP
+          FALL FROM
           <br />
           <span
             style={{
@@ -49,7 +49,7 @@ export function HeroSection() {
               textShadow: "0 0 30px rgba(39,215,255,0.6)",
             }}
           >
-            OF ANNAPURNA
+            THE SKY
           </span>
         </motion.h1>
 
@@ -60,7 +60,7 @@ export function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.9, duration: 0.8 }}
         >
-          Experience freedom above mountains &amp; lakes
+          Skydiving &amp; Paragliding above the world's greatest peaks
         </motion.p>
 
         <motion.div
@@ -75,7 +75,7 @@ export function HeroSection() {
             className="font-cinematic tracking-[0.12em] px-10 py-4 rounded-full text-white text-lg transition-all hover:scale-105 pulse-orange"
             style={{ background: "#FF7A1A" }}
           >
-            BOOK YOUR FLIGHT
+            BOOK YOUR ADVENTURE
           </a>
           <a
             href="#packages"

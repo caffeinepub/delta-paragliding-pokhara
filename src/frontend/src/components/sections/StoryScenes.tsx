@@ -4,24 +4,24 @@ export function StoryScenes() {
   const scenes = [
     {
       label: "SCENE 01",
-      title: "THE RUN",
-      image: IMG.takeoff,
+      title: "THE JUMP",
+      image: IMG.skyEverest,
       align: "left",
-      text: "It begins with a sprint. Feel the ground beneath your feet, the wind pulling at the canopy above you, and then — the hill drops away. In three seconds, the world transforms. You're no longer running. You're flying.",
+      text: "The door opens at 13,000 feet above the Himalayas. Below you — the Everest region, the highest landscape on Earth. In five seconds, you leap. The wind hits at 200 km/h and the world becomes a blur of peaks, sky, and pure adrenaline. Nothing prepares you for this.",
     },
     {
       label: "SCENE 02",
       title: "THE FLIGHT",
       image: IMG.pov,
       align: "right",
-      text: "Two thousand feet above Phewa Lake, the silence is absolute. The turquoise water below mirrors the sky above. The Annapurna range stretches across the horizon in an unbroken wall of snow and stone. This is what freedom looks like.",
+      text: "Two thousand feet above Phewa Lake, the silence is absolute. The turquoise water below mirrors the sky above. The Annapurna range stretches across the horizon in an unbroken wall of snow and stone. Under the paraglider canopy, this is what freedom looks like.",
     },
     {
       label: "SCENE 03",
       title: "THE FREEDOM",
       image: IMG.joy,
       align: "left",
-      text: "Arms open. Wind in your face. Heart absolutely full. There are moments in life that change you — this is one of them. Every passenger who flies with Delta Skydiving & Paragliding lands a different person than when they left the ground.",
+      text: "Whether you leapt from a plane above Everest or soared on thermals over Pokhara — you land changed. Arms open. Heart full. Delta Skydiving & Paragliding exists for this single moment: the one that stays with you forever.",
     },
   ];
 
