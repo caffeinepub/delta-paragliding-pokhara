@@ -2,6 +2,9 @@ import { EMAIL_LINK, IG_LINK, PACKAGES, WA_LINK } from "@/constants";
 import { Instagram, Mail } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 
+const SEASONAL_WA_LINK =
+  "https://wa.me/9779708075788?text=Hi%2C%20I%20want%20to%20know%20more%20about%20seasonal%20skydiving";
+
 function BookingButtons({ pkgId }: { pkgId: string }) {
   return (
     <div className="flex flex-col gap-2 mt-4">
@@ -50,6 +53,26 @@ function BookingButtons({ pkgId }: { pkgId: string }) {
   );
 }
 
+function SeasonalButton({ pkgId }: { pkgId: string }) {
+  return (
+    <div className="flex flex-col gap-2 mt-4">
+      <a
+        href={SEASONAL_WA_LINK}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-ocid={`${pkgId}.whatsapp_button`}
+        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-white text-sm transition-all duration-300 hover:scale-105"
+        style={{
+          background: "#25D366",
+          boxShadow: "0 0 16px rgba(37,211,102,0.5)",
+        }}
+      >
+        <SiWhatsapp size={16} />📩 DM to Know More
+      </a>
+    </div>
+  );
+}
+
 export function PackagesSection() {
   return (
     <section
@@ -88,7 +111,7 @@ export function PackagesSection() {
                 <div
                   className="absolute top-4 right-4 z-10 font-cinematic text-xs tracking-widest px-3 py-1 rounded-full text-white"
                   style={{
-                    background: "#FF7A1A",
+                    background: pkg.seasonal ? "#FF6B1A" : "#FF7A1A",
                     boxShadow: "0 0 15px rgba(255,122,26,0.5)",
                   }}
                 >
@@ -120,13 +143,17 @@ export function PackagesSection() {
                   <span className="text-sm" style={{ color: "#9FB2C7" }}>
                     {pkg.duration}
                   </span>
-                  <span className="w-1 h-1 rounded-full bg-white/30" />
-                  <span
-                    className="font-cinematic text-2xl"
-                    style={{ color: pkg.featured ? "#FF7A1A" : "#fff" }}
-                  >
-                    {pkg.price}
-                  </span>
+                  {!pkg.seasonal && pkg.price && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-white/30" />
+                      <span
+                        className="font-cinematic text-2xl"
+                        style={{ color: pkg.featured ? "#FF7A1A" : "#fff" }}
+                      >
+                        {pkg.price}
+                      </span>
+                    </>
+                  )}
                 </div>
                 <p
                   className="text-sm leading-relaxed"
@@ -134,7 +161,11 @@ export function PackagesSection() {
                 >
                   {pkg.desc}
                 </p>
-                <BookingButtons pkgId={pkg.id} />
+                {pkg.seasonal ? (
+                  <SeasonalButton pkgId={pkg.id} />
+                ) : (
+                  <BookingButtons pkgId={pkg.id} />
+                )}
               </div>
             </div>
           ))}

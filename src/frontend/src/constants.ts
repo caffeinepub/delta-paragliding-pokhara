@@ -12,6 +12,8 @@ export const IMG = {
   safety: "/assets/generated/pilot-safety.dim_1200x800.jpg",
   wings: "/assets/generated/gallery-wings.dim_800x600.jpg",
   lake: "/assets/generated/lake-reflection.dim_1200x800.jpg",
+  skyEverest: "/assets/generated/skydiving-everest.dim_1200x800.jpg",
+  skyPokhara: "/assets/generated/skydiving-pokhara.dim_1200x800.jpg",
 };
 
 export const GALLERY = [
@@ -35,6 +37,7 @@ export const PACKAGES = [
     image: IMG.hero,
     featured: false,
     badge: null as string | null,
+    seasonal: false,
   },
   {
     id: "adventure",
@@ -45,6 +48,7 @@ export const PACKAGES = [
     image: IMG.pov,
     featured: true,
     badge: "MOST POPULAR" as string | null,
+    seasonal: false,
   },
   {
     id: "elite",
@@ -55,6 +59,29 @@ export const PACKAGES = [
     image: IMG.aerial,
     featured: false,
     badge: null as string | null,
+    seasonal: false,
+  },
+  {
+    id: "sky-everest",
+    name: "Everest Skydiving",
+    duration: "Seasonal",
+    price: "",
+    desc: "Leap from altitude above the world's highest peaks. An exclusive skydiving experience over the Everest region — views no other sport can offer.",
+    image: IMG.skyEverest,
+    featured: false,
+    badge: "SEASONAL" as string | null,
+    seasonal: true,
+  },
+  {
+    id: "sky-pokhara",
+    name: "Pokhara Skydiving",
+    duration: "Seasonal",
+    price: "",
+    desc: "Freefall above Phewa Lake with a front-row view of the Annapurna range. The most breathtaking skydiving drop zone in South Asia.",
+    image: IMG.skyPokhara,
+    featured: true,
+    badge: "SEASONAL" as string | null,
+    seasonal: true,
   },
 ];
 

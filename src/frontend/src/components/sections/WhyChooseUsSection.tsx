@@ -97,8 +97,9 @@ export function WhyChooseUsSection() {
             }}
           />
           <p className="mt-6 text-gray-400 text-lg max-w-xl mx-auto">
-            When it comes to paragliding in Pokhara, Delta sets the standard —
-            for thrills, safety, and memories that last a lifetime.
+            When it comes to skydiving and paragliding in Pokhara, Delta sets
+            the standard — for thrills, safety, and memories that last a
+            lifetime.
           </p>
         </motion.div>
 

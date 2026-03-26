@@ -31,7 +31,7 @@ export function Footer() {
               className="font-cinematic text-lg tracking-wide"
               style={{ color: "#FF7A1A" }}
             >
-              PARAGLIDING
+              SKYDIVING & PARAGLIDING
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -89,7 +89,9 @@ export function Footer() {
           className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs"
           style={{ color: "#9FB2C7" }}
         >
-          <p>© {year} Delta Paragliding Pokhara. All rights reserved.</p>
+          <p>
+            © {year} Delta Skydiving & Paragliding Pokhara. All rights reserved.
+          </p>
           <p>
             Built with ❤️ using{" "}
             <a

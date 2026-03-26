@@ -21,7 +21,7 @@ export function StoryScenes() {
       title: "THE FREEDOM",
       image: IMG.joy,
       align: "left",
-      text: "Arms open. Wind in your face. Heart absolutely full. There are moments in life that change you — this is one of them. Every passenger who flies with Delta Paragliding lands a different person than when they left the ground.",
+      text: "Arms open. Wind in your face. Heart absolutely full. There are moments in life that change you — this is one of them. Every passenger who flies with Delta Skydiving & Paragliding lands a different person than when they left the ground.",
     },
   ];
 

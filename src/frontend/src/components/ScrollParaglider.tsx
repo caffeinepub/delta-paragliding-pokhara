@@ -1,376 +1,248 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
-// ── helpers ─────────────────────────────────────────────────────────────────
+// ── Skydiver under open parachute canopy ─────────────────────────────────────
 
-function Line({
-  p0,
-  p1,
-  color = "#cccccc",
-  r = 0.006,
-}: {
-  p0: THREE.Vector3;
-  p1: THREE.Vector3;
-  color?: string;
-  r?: number;
-}) {
-  const ref = useRef<THREE.Mesh>(null);
-  useEffect(() => {
-    if (!ref.current) return;
-    const dir = new THREE.Vector3().subVectors(p1, p0);
-    const len = dir.length();
-    const mid = new THREE.Vector3().addVectors(p0, p1).multiplyScalar(0.5);
-    ref.current.position.copy(mid);
-    ref.current.scale.y = len;
-    ref.current.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 1, 0),
-      dir.normalize(),
-    );
+function Skydiver({ scrollProgress }: { scrollProgress: number }) {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!groupRef.current) return;
+    const t = clock.elapsedTime;
+
+    // Move from top to bottom as user scrolls
+    const y = 5.5 - scrollProgress * 11;
+    // Gentle horizontal drift
+    const x = Math.sin(scrollProgress * Math.PI * 0.8) * 0.8;
+    groupRef.current.position.set(x, y, 0);
+
+    // Very gentle sway — under canopy is stable
+    groupRef.current.rotation.y = Math.sin(t * 0.3) * 0.12;
+    groupRef.current.rotation.z = Math.sin(t * 0.2 + 0.5) * 0.06;
+    groupRef.current.rotation.x = 0;
   });
-  return (
-    <mesh ref={ref}>
-      <cylinderGeometry args={[r, r, 1, 4]} />
-      <meshBasicMaterial color={color} transparent opacity={0.75} />
-    </mesh>
-  );
-}
 
-// ── canopy ───────────────────────────────────────────────────────────────────
-// Realistic inflated paraglider wing:
-//  • Elliptical planform (wider centre, tapered tips)
-//  • Positive dihedral arc (tips curve up)
-//  • Each cell is a smooth rounded lobe (inflated)
-//  • Ribs are thin vertical panels between cells
+  const ORANGE = "#FF6B1A";
+  const WHITE = "#FFFFFF";
+  const SUIT = "#FF6B1A";
+  const HELMET = "#222222";
+  const SKIN = "#F5CBA7";
+  const LINE_COLOR = "#cccccc";
 
-const NUM_CELLS = 9;
-const SPAN = 5.0; // full span
-const CHORD_MID = 1.6; // chord at centre cell
-const CELL_COLOURS = [
-  "#c82000",
-  "#ffffff",
-  "#c82000",
-  "#ffffff",
-  "#c82000",
-  "#ffffff",
-  "#c82000",
-  "#ffffff",
-  "#c82000",
-];
-const RIB_COLOUR = "#aa1800";
+  // Build 8 suspension lines from canopy rim down to harness
+  const lines: React.ReactElement[] = [];
+  const numLines = 8;
+  const canopyRadius = 1.9;
+  const canopyY = 1.8; // canopy center y relative to group
+  const harnessY = -0.3; // harness attachment y
 
-// Precomputed cells so we can use stable non-index keys
-const CELLS = CELL_COLOURS.map((color, i) => {
-  const p = getCellProps(i);
-  return { id: `cell-pos-${i * 111 + 7}`, color, ...p };
-});
+  for (let li = 0; li < numLines; li++) {
+    const angle = (li / numLines) * Math.PI * 2;
+    // Rim point at bottom edge of dome
+    const rimX = canopyRadius * 0.85 * Math.cos(angle);
+    const rimZ = canopyRadius * 0.85 * Math.sin(angle);
+    const rimY = canopyY - 0.25; // bottom of dome
 
-const RIBS = Array.from({ length: NUM_CELLS + 1 }, (_, i) => {
-  const ti = (i - 0.5) / (NUM_CELLS - 1);
-  const norm = ti * 2 - 1;
-  const x = norm * (SPAN / 2);
-  const y = norm * norm * 0.55;
-  const z = norm * norm * 0.18;
-  const chordScale = Math.sqrt(Math.max(0, 1 - norm * norm * 0.55));
-  const chord = CHORD_MID * chordScale;
-  return { id: `rib-pos-${i * 113 + 3}`, x, y, z, chord };
-});
+    // Central harness attachment
+    const attachX = 0;
+    const attachY = harnessY;
+    const attachZ = 0;
 
-// Precompute per-cell position on the wing arc
-function getCellProps(i: number) {
-  const t = i / (NUM_CELLS - 1); // 0..1
-  const norm = t * 2 - 1; // -1..1 (tip to tip)
+    // Midpoint for line geometry
+    const midX = (rimX + attachX) / 2;
+    const midY = (rimY + attachY) / 2;
+    const midZ = (rimZ + attachZ) / 2;
 
-  // Span-wise x position
-  const x = norm * (SPAN / 2);
+    // Line length
+    const dx = rimX - attachX;
+    const dy = rimY - attachY;
+    const dz = rimZ - attachZ;
+    const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-  // Dihedral: tips curve up
-  const y = norm * norm * 0.55;
+    // Direction vector
+    const dir = new THREE.Vector3(dx, dy, dz).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    const quaternion = new THREE.Quaternion().setFromUnitVectors(up, dir);
 
-  // Sweep: tips swept back slightly
-  const z = norm * norm * 0.18;
-
-  // Elliptical chord taper
-  const chordScale = Math.sqrt(Math.max(0, 1 - norm * norm * 0.55));
-  const chord = CHORD_MID * chordScale;
-
-  // Cell width (slightly narrower at tips)
-  const cellW = (SPAN / NUM_CELLS) * chordScale * 0.97;
-
-  return { x, y, z, chord, cellW };
-}
-
-function InflatedCell({
-  x,
-  y,
-  z,
-  chord,
-  cellW,
-  color,
-}: {
-  x: number;
-  y: number;
-  z: number;
-  chord: number;
-  cellW: number;
-  color: string;
-}) {
-  // Each cell: rounded-top box to simulate inflation
-  // We use a custom shape: tall box + half-torus cap on top for the bulge
-  const bulge = chord * 0.22;
-  const boxH = chord * 0.28;
-  return (
-    <group position={[x, y, -z]}>
-      {/* main inflated body – slightly rounded via sphere scale trick */}
-      <mesh>
-        <boxGeometry args={[cellW, boxH, chord]} />
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.0} />
-      </mesh>
-      {/* bulge on top (leading edge puff) */}
-      <mesh position={[0, boxH * 0.5, -chord * 0.1]}>
-        <sphereGeometry args={[bulge, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={color} roughness={0.55} metalness={0.0} />
-      </mesh>
-      {/* trailing edge tuck – darker */}
-      <mesh
-        position={[0, -boxH * 0.3, chord * 0.38]}
-        rotation={[0, 0, Math.PI / 2]}
-      >
-        <cylinderGeometry args={[bulge * 0.35, bulge * 0.35, cellW, 8, 1]} />
-        <meshStandardMaterial color={RIB_COLOUR} roughness={0.7} />
-      </mesh>
-    </group>
-  );
-}
-
-function Canopy() {
-  return (
-    <group>
-      {CELLS.map((cell) => (
-        <InflatedCell
-          key={cell.id}
-          x={cell.x}
-          y={cell.y}
-          z={cell.z}
-          chord={cell.chord}
-          cellW={cell.cellW}
-          color={cell.color}
-        />
-      ))}
-      {RIBS.map((rib) => (
-        <mesh key={rib.id} position={[rib.x, rib.y - rib.chord * 0.05, -rib.z]}>
-          <boxGeometry args={[0.018, rib.chord * 0.38, rib.chord]} />
-          <meshStandardMaterial color={RIB_COLOUR} roughness={0.6} />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-// ── suspension lines ──────────────────────────────────────────────────────────
-// Four rows of lines per half (A, B, C, D) converging on two risers per side,
-// then to the harness shoulder attachment points.
-
-function SuspensionLines() {
-  const lines = useMemo(() => {
-    const result: {
-      p0: THREE.Vector3;
-      p1: THREE.Vector3;
-      color: string;
-      id?: string;
-    }[] = [];
-
-    // Riser confluence points (where lines bundle before harness)
-    const riserL = new THREE.Vector3(-0.28, -0.85, 0.05);
-    const riserR = new THREE.Vector3(0.28, -0.85, 0.05);
-
-    // We attach lines from each cell at A/B/C/D chord positions
-    const chordPositions = [-0.38, -0.12, 0.14, 0.36]; // z offsets along chord
-    const chordColors = ["#dddddd", "#cccccc", "#bbbbbb", "#aaaaaa"];
-
-    for (let i = 0; i < NUM_CELLS; i++) {
-      const p = getCellProps(i);
-      const attachY = p.y - p.chord * 0.12;
-
-      chordPositions.forEach((cz, ri) => {
-        const attachPt = new THREE.Vector3(
-          p.x,
-          attachY,
-          -p.z - cz * p.chord * 0.6,
-        );
-        const riser = p.x < 0 ? riserL : riserR;
-        // mid-confluence (bundle point per side per row)
-        const mid = new THREE.Vector3(
-          attachPt.x * 0.6 + riser.x * 0.4,
-          attachPt.y * 0.4 + riser.y * 0.6,
-          (attachPt.z + riser.z) * 0.5,
-        );
-        result.push({ p0: attachPt, p1: mid, color: chordColors[ri] });
-        result.push({ p0: mid, p1: riser, color: chordColors[ri] });
-      });
-    }
-
-    // Brake toggles (trailing edge)
-    const brakeL = new THREE.Vector3(
-      -SPAN / 2 + 0.1,
-      getCellProps(0).y - 0.2,
-      0.2,
+    lines.push(
+      <mesh key={li} position={[midX, midY, midZ]} quaternion={quaternion}>
+        <cylinderGeometry args={[0.012, 0.012, length, 4]} />
+        <meshStandardMaterial color={LINE_COLOR} roughness={0.7} />
+      </mesh>,
     );
-    const brakeR = new THREE.Vector3(
-      SPAN / 2 - 0.1,
-      getCellProps(NUM_CELLS - 1).y - 0.2,
-      0.2,
-    );
-    result.push({
-      p0: brakeL,
-      p1: new THREE.Vector3(-0.3, -0.7, 0.3),
-      color: "#ff6600",
-    });
-    result.push({
-      p0: brakeR,
-      p1: new THREE.Vector3(0.3, -0.7, 0.3),
-      color: "#ff6600",
-    });
+  }
 
-    return result.map((r, idx) => ({ ...r, id: `ln-${idx * 97 + 5}` }));
-  }, []);
-
-  return (
-    <group>
-      {lines.map((l) => (
-        <Line key={l.id} p0={l.p0} p1={l.p1} color={l.color} r={0.005} />
-      ))}
-    </group>
-  );
-}
-
-// ── pilot + harness ───────────────────────────────────────────────────────────
-// Reclined seated position inside a pod harness
-
-function Pilot() {
-  return (
-    <group position={[0, -1.3, 0.05]}>
-      {/* Pod harness - elongated cocoon */}
-      <mesh position={[0, -0.1, 0.1]} rotation={[0.25, 0, 0]}>
-        <capsuleGeometry args={[0.22, 0.7, 8, 12]} />
-        <meshStandardMaterial
-          color="#1a2060"
-          roughness={0.65}
-          metalness={0.1}
+  // Canopy panels: alternating orange/white segments
+  const panelSegments: React.ReactElement[] = [];
+  const numPanels = 8;
+  for (let pi = 0; pi < numPanels; pi++) {
+    const phiStart = (pi / numPanels) * Math.PI * 2;
+    const phiLength = (Math.PI * 2) / numPanels;
+    const color = pi % 2 === 0 ? ORANGE : WHITE;
+    panelSegments.push(
+      <mesh key={pi} position={[0, canopyY, 0]}>
+        <sphereGeometry
+          args={[canopyRadius, 6, 8, phiStart, phiLength, 0, Math.PI * 0.55]}
         />
-      </mesh>
-      {/* Harness front panel */}
-      <mesh position={[0, 0.05, 0.26]} rotation={[0.25, 0, 0]}>
-        <boxGeometry args={[0.42, 0.55, 0.06]} />
-        <meshStandardMaterial color="#ff5500" roughness={0.5} />
-      </mesh>
-      {/* Shoulder straps */}
-      <mesh position={[-0.18, 0.28, 0.22]} rotation={[0.1, 0, 0.15]}>
-        <boxGeometry args={[0.07, 0.36, 0.05]} />
-        <meshStandardMaterial color="#1a2060" roughness={0.6} />
-      </mesh>
-      <mesh position={[0.18, 0.28, 0.22]} rotation={[0.1, 0, -0.15]}>
-        <boxGeometry args={[0.07, 0.36, 0.05]} />
-        <meshStandardMaterial color="#1a2060" roughness={0.6} />
-      </mesh>
-      {/* Carabiner left */}
-      <mesh position={[-0.22, 0.25, 0.18]}>
-        <torusGeometry args={[0.055, 0.016, 6, 12, Math.PI * 1.7]} />
-        <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
-      </mesh>
-      {/* Carabiner right */}
-      <mesh position={[0.22, 0.25, 0.18]}>
-        <torusGeometry args={[0.055, 0.016, 6, 12, Math.PI * 1.7]} />
-        <meshStandardMaterial color="#c0c0c0" roughness={0.2} metalness={0.9} />
-      </mesh>
-      {/* Torso */}
-      <mesh position={[0, 0.35, 0.12]} rotation={[-0.2, 0, 0]}>
-        <capsuleGeometry args={[0.15, 0.35, 6, 10]} />
-        <meshStandardMaterial color="#e84000" roughness={0.6} />
-      </mesh>
-      {/* Head with helmet */}
-      <mesh position={[0, 0.72, 0.08]}>
-        <sphereGeometry args={[0.155, 14, 12]} />
-        <meshStandardMaterial color="#cc3800" roughness={0.4} />
-      </mesh>
-      {/* Helmet visor */}
-      <mesh position={[0, 0.68, 0.2]} rotation={[-0.2, 0, 0]}>
-        <boxGeometry args={[0.24, 0.1, 0.06]} />
         <meshStandardMaterial
-          color="#111111"
+          color={color}
+          roughness={0.35}
+          metalness={0.05}
+          side={THREE.DoubleSide}
+        />
+      </mesh>,
+    );
+  }
+
+  return (
+    <group ref={groupRef}>
+      {/* ── CANOPY panels ── */}
+      {panelSegments}
+
+      {/* ── Canopy vent/top cap (dark) ── */}
+      <mesh position={[0, canopyY + canopyRadius * 0.52, 0]}>
+        <sphereGeometry args={[0.22, 10, 8]} />
+        <meshStandardMaterial color="#333333" roughness={0.5} />
+      </mesh>
+
+      {/* ── Suspension lines ── */}
+      {lines}
+
+      {/* ── HARNESS / container pack (box on back) ── */}
+      <mesh position={[0, -0.05, -0.22]}>
+        <boxGeometry args={[0.35, 0.45, 0.18]} />
+        <meshStandardMaterial color="#1a1a2e" roughness={0.6} />
+      </mesh>
+
+      {/* ── HEAD ── */}
+      <mesh position={[0, 0.82, 0]}>
+        <sphereGeometry args={[0.18, 14, 12]} />
+        <meshStandardMaterial color={SKIN} roughness={0.6} />
+      </mesh>
+      {/* Helmet */}
+      <mesh position={[0, 0.87, 0.01]} scale={[1.08, 0.88, 1.08]}>
+        <sphereGeometry
+          args={[0.19, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.6]}
+        />
+        <meshStandardMaterial color={HELMET} roughness={0.4} metalness={0.2} />
+      </mesh>
+      {/* Visor */}
+      <mesh position={[0, 0.82, 0.18]} rotation={[0.2, 0, 0]}>
+        <boxGeometry args={[0.28, 0.08, 0.05]} />
+        <meshStandardMaterial
+          color="#27D7FF"
           roughness={0.1}
           metalness={0.4}
           transparent
           opacity={0.85}
         />
       </mesh>
-      {/* Left arm with brake toggle */}
-      <mesh position={[-0.32, 0.22, 0.2]} rotation={[0.2, 0, -0.6]}>
-        <capsuleGeometry args={[0.06, 0.32, 4, 8]} />
-        <meshStandardMaterial color="#e84000" roughness={0.6} />
+
+      {/* ── TORSO ── */}
+      <mesh position={[0, 0.28, 0]}>
+        <boxGeometry args={[0.42, 0.52, 0.26]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
       </mesh>
-      {/* Right arm with brake toggle */}
-      <mesh position={[0.32, 0.22, 0.2]} rotation={[0.2, 0, 0.6]}>
-        <capsuleGeometry args={[0.06, 0.32, 4, 8]} />
-        <meshStandardMaterial color="#e84000" roughness={0.6} />
+      {/* White chest stripe */}
+      <mesh position={[0, 0.38, 0.14]}>
+        <boxGeometry args={[0.1, 0.25, 0.02]} />
+        <meshStandardMaterial color={WHITE} roughness={0.4} />
       </mesh>
-      {/* Legs reclined in pod */}
-      <mesh position={[-0.1, -0.5, 0.15]} rotation={[-0.3, 0, 0.1]}>
-        <capsuleGeometry args={[0.07, 0.3, 4, 6]} />
-        <meshStandardMaterial color="#1a2060" roughness={0.7} />
+
+      {/* ── HIPS ── */}
+      <mesh position={[0, -0.04, 0]}>
+        <boxGeometry args={[0.38, 0.22, 0.24]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
       </mesh>
-      <mesh position={[0.1, -0.5, 0.15]} rotation={[-0.3, 0, -0.1]}>
-        <capsuleGeometry args={[0.07, 0.3, 4, 6]} />
-        <meshStandardMaterial color="#1a2060" roughness={0.7} />
+
+      {/* ── ARMS — hanging down slightly out from body ── */}
+      {/* Left upper arm */}
+      <mesh position={[-0.3, 0.22, 0]} rotation={[0, 0, 0.3]}>
+        <capsuleGeometry args={[0.07, 0.3, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Left forearm */}
+      <mesh position={[-0.38, -0.08, 0.05]} rotation={[0.15, 0, 0.5]}>
+        <capsuleGeometry args={[0.06, 0.26, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Left hand */}
+      <mesh position={[-0.44, -0.28, 0.1]}>
+        <sphereGeometry args={[0.065, 8, 7]} />
+        <meshStandardMaterial color={SKIN} roughness={0.5} />
+      </mesh>
+
+      {/* Right upper arm */}
+      <mesh position={[0.3, 0.22, 0]} rotation={[0, 0, -0.3]}>
+        <capsuleGeometry args={[0.07, 0.3, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Right forearm */}
+      <mesh position={[0.38, -0.08, 0.05]} rotation={[0.15, 0, -0.5]}>
+        <capsuleGeometry args={[0.06, 0.26, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Right hand */}
+      <mesh position={[0.44, -0.28, 0.1]}>
+        <sphereGeometry args={[0.065, 8, 7]} />
+        <meshStandardMaterial color={SKIN} roughness={0.5} />
+      </mesh>
+
+      {/* ── LEGS — hanging down, slightly bent (relaxed in harness) ── */}
+      {/* Left upper leg */}
+      <mesh position={[-0.14, -0.32, 0.05]} rotation={[0.15, 0, 0.08]}>
+        <capsuleGeometry args={[0.08, 0.3, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Left lower leg */}
+      <mesh position={[-0.16, -0.62, -0.05]} rotation={[-0.25, 0, 0.05]}>
+        <capsuleGeometry args={[0.07, 0.28, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Left boot */}
+      <mesh position={[-0.17, -0.82, -0.1]}>
+        <boxGeometry args={[0.12, 0.1, 0.22]} />
+        <meshStandardMaterial color={HELMET} roughness={0.6} />
+      </mesh>
+
+      {/* Right upper leg */}
+      <mesh position={[0.14, -0.32, 0.05]} rotation={[0.15, 0, -0.08]}>
+        <capsuleGeometry args={[0.08, 0.3, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Right lower leg */}
+      <mesh position={[0.16, -0.62, -0.05]} rotation={[-0.25, 0, -0.05]}>
+        <capsuleGeometry args={[0.07, 0.28, 5, 8]} />
+        <meshStandardMaterial color={SUIT} roughness={0.55} />
+      </mesh>
+      {/* Right boot */}
+      <mesh position={[0.17, -0.82, -0.1]}>
+        <boxGeometry args={[0.12, 0.1, 0.22]} />
+        <meshStandardMaterial color={HELMET} roughness={0.6} />
       </mesh>
     </group>
   );
 }
-
-// ── main animated model ───────────────────────────────────────────────────────
-
-function Paraglider({ scrollProgress }: { scrollProgress: number }) {
-  const groupRef = useRef<THREE.Group>(null);
-
-  useFrame(({ clock }) => {
-    if (!groupRef.current) return;
-    const t = clock.elapsedTime;
-    const y = 6.0 - scrollProgress * 12;
-    const x = Math.sin(scrollProgress * Math.PI * 1.2) * 2.0;
-    groupRef.current.position.set(x, y, 0);
-    const bankAngle = Math.cos(scrollProgress * Math.PI * 1.2) * 0.18;
-    groupRef.current.rotation.z = bankAngle + Math.sin(t * 0.5) * 0.035;
-    groupRef.current.rotation.x = Math.sin(t * 0.35) * 0.04 + 0.05;
-    groupRef.current.rotation.y = Math.sin(t * 0.25) * 0.025;
-  });
-
-  return (
-    <group ref={groupRef}>
-      <Canopy />
-      <SuspensionLines />
-      <Pilot />
-    </group>
-  );
-}
-
-// ── scene & canvas ────────────────────────────────────────────────────────────
 
 function Scene({ scrollProgress }: { scrollProgress: number }) {
   return (
     <>
-      <ambientLight intensity={0.7} color="#c0d8ff" />
+      <ambientLight intensity={1.2} color="#ffffff" />
       <directionalLight
-        position={[6, 10, 6]}
-        intensity={1.6}
-        color="#fff8e8"
+        position={[5, 8, 5]}
+        intensity={2.0}
+        color="#fff5e0"
         castShadow
       />
       <directionalLight
-        position={[-4, 3, -4]}
-        intensity={0.35}
-        color="#5070ff"
+        position={[-3, 2, -3]}
+        intensity={0.6}
+        color="#6080ff"
       />
-      <Paraglider scrollProgress={scrollProgress} />
+      <pointLight position={[0, 3, 4]} intensity={0.8} color="#FF6B1A" />
+      <Skydiver scrollProgress={scrollProgress} />
     </>
   );
 }
@@ -400,7 +272,7 @@ export default function ScrollParaglider() {
       }}
     >
       <Canvas
-        camera={{ position: [0, 0, 12], fov: 48 }}
+        camera={{ position: [0, 0, 9], fov: 50 }}
         gl={{ alpha: true }}
         style={{ background: "transparent" }}
       >

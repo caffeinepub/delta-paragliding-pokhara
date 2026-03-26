@@ -22,7 +22,7 @@ const REVIEWS = [
     flag: "🇯🇵",
     country: "Japan",
     stars: 5,
-    text: "Delta Paragliding is world-class. My pilot did acrobatics that felt like flying in a movie. The photos they took are incredible. 100% recommend.",
+    text: "Delta Skydiving & Paragliding is world-class. My pilot did acrobatics that felt like flying in a movie. The photos they took are incredible. 100% recommend.",
     source: "google",
   },
   {

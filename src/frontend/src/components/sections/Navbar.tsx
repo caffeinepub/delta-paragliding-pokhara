@@ -41,7 +41,7 @@ export function Navbar() {
               textShadow: "0 0 15px rgba(255,122,26,0.7)",
             }}
           >
-            PARAGLIDING
+            SKYDIVING & PARAGLIDING
           </span>
         </a>
 

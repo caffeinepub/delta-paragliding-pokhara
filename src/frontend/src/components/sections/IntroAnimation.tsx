@@ -11,7 +11,7 @@ export function IntroAnimation({ show }: { show: boolean }) {
       style: { color: "#27D7FF", textShadow: "0 0 30px rgba(39,215,255,0.8)" },
     },
     {
-      text: "DELTA PARAGLIDING",
+      text: "DELTA SKYDIVING & PARAGLIDING",
       style: { color: "#FF7A1A", textShadow: "0 0 30px rgba(255,122,26,0.8)" },
     },
   ];
@@ -52,7 +52,7 @@ export function IntroAnimation({ show }: { show: boolean }) {
             {lines.map((l, i) => (
               <motion.h2
                 key={l.text}
-                className="font-cinematic text-4xl md:text-7xl lg:text-8xl tracking-widest text-center text-white"
+                className="font-cinematic text-3xl md:text-6xl lg:text-7xl tracking-widest text-center text-white"
                 style={l.style}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
